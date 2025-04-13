@@ -80,15 +80,19 @@ export class MiningService {
   @Cron(CronExpression.EVERY_MINUTE)
   async calculateMiningPoints() {
     const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
+    
+    // 1분 이상 경과한 mining 레코드를 찾음
     const miningRecords = await this.miningModel.find({ lastUpdated: { $lte: oneMinuteAgo } });
+    const minerCount = await this.minerModel.countDocuments(); // 전체 유저 수를 구함
+    const hashRate = this.calculateHashRate(minerCount); // 전체 유저 수에 기반한 공통 해시레이트 계산
+    const pointsGained = this.calculatePoints(hashRate); // 포인트 계산
+  
     const now = new Date();
   
     for (const mining of miningRecords) {
-      const hashRate = mining.hashRate;
-      const pointsGained = this.calculatePoints(hashRate);
-  
       // mining 로그에 포인트 누적 (기록 용도)
       mining.pointsGained += pointsGained;
+      mining.lastUpdated = now; // lastUpdated 갱신
       await mining.save();
   
       // miner 포인트도 누적 (실제 사용자 보상)
@@ -99,7 +103,6 @@ export class MiningService {
       );
     }
   }
-
 
   // 포인트 클레임 처리
   async claimPoints(walletAddress: string) {
