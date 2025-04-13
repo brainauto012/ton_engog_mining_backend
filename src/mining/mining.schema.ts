@@ -6,11 +6,8 @@ export type MiningDocument = Mining & Document;
 
 @Schema({ timestamps: true })
 export class Mining {
-  @Prop({ required: true })
+  @Prop({ required: true }) // 여러 번 채굴 가능
   walletAddress: string;
-
-  @Prop({ default: 0 })
-  points: number;
 
   @Prop({ required: true })
   hashRate: number;

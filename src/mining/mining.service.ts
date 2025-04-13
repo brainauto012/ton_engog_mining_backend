@@ -90,7 +90,16 @@ export class MiningService {
     return {
       walletAddress: miner.walletAddress,
       points: miner.points,
+      totalClaimed: miner.totalClaimed ?? 0,
       lastUpdated: miner.updatedAt,
+      isMining: true, // 프론트에서 버튼 상태 판단에 쓰도록 기본값 true 반환 (실제 로직 추가 시 변경)
     };
+  }
+
+  async claimToContract(userId: string, points: number) {
+    // 실제 스마트 컨트랙트 호출 로직은 여기서
+    // 예시로 가상으로 처리하고 결과 반환
+    console.log(`Claiming ${points} points for user ${userId} to contract...`);
+    return { success: true, transactionId: 'tx1234' }; // 가상 거래 ID
   }
 }
