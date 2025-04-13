@@ -39,6 +39,11 @@ export class MiningService {
       pointsGained,
     });
 
+    const existingMining = await this.miningModel.findOne({ walletAddress });
+    if (existingMining) {
+      throw new BadRequestException('이미 채굴 중입니다.');
+    }
+
     // Miner 포인트 누적
     const miner = await this.minerModel.findOneAndUpdate(
       { walletAddress },
@@ -72,22 +77,28 @@ export class MiningService {
   }
 
   // 채굴 포인트 계산 및 자동 업데이트
-  @Cron(CronExpression.EVERY_MINUTE) // 1분마다 채굴 포인트를 갱신
+  @Cron(CronExpression.EVERY_MINUTE)
   async calculateMiningPoints() {
-    const miningRecords = await this.miningModel.find(); // mining 모델에서 채굴 기록 조회
+    const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
+    const miningRecords = await this.miningModel.find({ lastUpdated: { $lte: oneMinuteAgo } });
     const now = new Date();
-
+  
     for (const mining of miningRecords) {
-      // mining 모델에서 해시레이트 가져오기
       const hashRate = mining.hashRate;
       const pointsGained = this.calculatePoints(hashRate);
-
-      // 채굴 포인트 업데이트
+  
+      // mining 로그에 포인트 누적 (기록 용도)
       mining.pointsGained += pointsGained;
       await mining.save();
+  
+      // miner 포인트도 누적 (실제 사용자 보상)
+      await this.minerModel.findOneAndUpdate(
+        { walletAddress: mining.walletAddress },
+        { $inc: { points: pointsGained } },
+        { upsert: true, new: true }
+      );
     }
   }
-
 
 
   // 포인트 클레임 처리

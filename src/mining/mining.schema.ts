@@ -17,6 +17,9 @@ export class Mining {
 
   @Prop({ default: 0 })
   totalMined: number;
+
+  @Prop({ default: Date.now })
+  lastUpdated: Date;
 }
 
 export const MiningSchema = SchemaFactory.createForClass(Mining);
