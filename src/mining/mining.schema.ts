@@ -6,7 +6,7 @@ export type MiningDocument = Mining & Document;
 
 @Schema({ timestamps: true })
 export class Mining {
-  @Prop({ required: true }) // 여러 번 채굴 가능
+  @Prop({ required: true })
   walletAddress: string;
 
   @Prop({ required: true })
@@ -14,6 +14,9 @@ export class Mining {
 
   @Prop({ required: true })
   pointsGained: number;
+
+  @Prop({ default: 0 })
+  totalMined: number;
 }
 
 export const MiningSchema = SchemaFactory.createForClass(Mining);

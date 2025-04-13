@@ -6,6 +6,11 @@ import { Model } from 'mongoose';
 import { Mining, MiningDocument } from './mining.schema';
 import { Miner, MinerDocument } from './miner.schema';
 import { StartMiningDto } from './dto/start-mining.dto';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import { sendJetton } from '../ton/sendJetton';  // sendJetton을 import
+import * as dotenv from 'dotenv';
+
+dotenv.config();
 
 @Injectable()
 export class MiningService {
@@ -13,6 +18,7 @@ export class MiningService {
     @InjectModel(Mining.name) private miningModel: Model<MiningDocument>,
     @InjectModel(Miner.name) private minerModel: Model<MinerDocument>,
   ) {}
+
 
   // 채굴 시작: 포인트를 누적
   async startMining(startMiningDto: StartMiningDto) {
@@ -65,6 +71,25 @@ export class MiningService {
     return { points: miner?.points ?? 0 };
   }
 
+  // 채굴 포인트 계산 및 자동 업데이트
+  @Cron(CronExpression.EVERY_MINUTE) // 1분마다 채굴 포인트를 갱신
+  async calculateMiningPoints() {
+    const miningRecords = await this.miningModel.find(); // mining 모델에서 채굴 기록 조회
+    const now = new Date();
+
+    for (const mining of miningRecords) {
+      // mining 모델에서 해시레이트 가져오기
+      const hashRate = mining.hashRate;
+      const pointsGained = this.calculatePoints(hashRate);
+
+      // 채굴 포인트 업데이트
+      mining.pointsGained += pointsGained;
+      await mining.save();
+    }
+  }
+
+
+
   // 포인트 클레임 처리
   async claimPoints(walletAddress: string) {
     const miner = await this.minerModel.findOne({ walletAddress });
@@ -79,8 +104,28 @@ export class MiningService {
 
     const claimedPoints = miner.points;
 
-    // 실제 토큰 전송은 블록체인 로직과 연결 필요 (여기선 생략)
-    // 예: await sendToken(walletAddress, claimedPoints);
+    if (!process.env.JETTON_WALLET_ADDRESS || !process.env.TON_ENDPOINT) {
+      throw new Error('환경변수가 올바르게 설정되지 않았습니다.');
+    }
+
+    const jettonWalletAddress = process.env.JETTON_WALLET_ADDRESS;
+    const tonEndpoint = process.env.TON_ENDPOINT;
+
+    // ENGOG 토큰 전송
+    try {
+      const result = await sendJetton({
+        recipient: walletAddress,
+        jettonWalletAddress, // 환경변수에 지정된 지갑 주소
+        jettonAmount: claimedPoints, // 클레임한 포인트만큼 토큰 전송
+        tonEndpoint // TON 엔드포인트
+      });
+
+      if (!result.success) {
+        throw new Error('토큰 전송에 실패했습니다.');
+      }
+    } catch (error) {
+      throw new BadRequestException('토큰 전송 실패: ' + error.message);
+    }
 
     // 포인트 0으로 초기화 + 총 클레임 누적
     miner.totalClaimed += claimedPoints;
