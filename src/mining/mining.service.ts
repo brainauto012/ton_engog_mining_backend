@@ -16,8 +16,14 @@ export class MiningService {
 
   // 채굴 시작: 포인트를 누적
   async startMining(startMiningDto: StartMiningDto) {
-    const { walletAddress, hashRate } = startMiningDto;
+    const { walletAddress } = startMiningDto;
 
+    const minerCount = await this.minerModel.countDocuments();
+
+    // 해시레이트 계산
+    const hashRate = this.calculateHashRate(minerCount);
+
+    // 포인트 계산
     const pointsGained = this.calculatePoints(hashRate);
 
     // 채굴 로그 저장
@@ -38,6 +44,13 @@ export class MiningService {
       message: '채굴이 완료되었습니다.',
       currentPoints: miner.points,
     };
+  }
+
+  // 해시레이트 계산 (유저 수 반비례)
+  private calculateHashRate(minerCount: number): number {
+    const BASE_HASH = 100;
+    const adjustedMinerCount = minerCount === 0 ? 1 : minerCount;
+    return Math.floor(BASE_HASH / adjustedMinerCount);
   }
 
   // 포인트 계산 로직
@@ -92,14 +105,12 @@ export class MiningService {
       points: miner.points,
       totalClaimed: miner.totalClaimed ?? 0,
       lastUpdated: miner.updatedAt,
-      isMining: true, // 프론트에서 버튼 상태 판단에 쓰도록 기본값 true 반환 (실제 로직 추가 시 변경)
+      isMining: true,
     };
   }
 
   async claimToContract(userId: string, points: number) {
-    // 실제 스마트 컨트랙트 호출 로직은 여기서
-    // 예시로 가상으로 처리하고 결과 반환
     console.log(`Claiming ${points} points for user ${userId} to contract...`);
-    return { success: true, transactionId: 'tx1234' }; // 가상 거래 ID
+    return { success: true, transactionId: 'tx1234' };
   }
 }

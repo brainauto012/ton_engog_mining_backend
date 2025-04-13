@@ -1,24 +1,27 @@
 import {
-    Controller,
-    Post,
-    Body,
-    Get,
-    Query,
-    NotFoundException,
-    BadRequestException,
-  } from '@nestjs/common';
-  import { StartMiningDto } from './dto/start-mining.dto';
-  import { MiningService } from './mining.service';
+  Controller,
+  Post,
+  Body,
+  Get,
+  Query,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
+import { StartMiningDto } from './dto/start-mining.dto';
+import { MiningService } from './mining.service';
+
+@Controller('mining')
+export class MiningController {
+  constructor(private readonly miningService: MiningService) {}
   
-  @Controller('mining')
-  export class MiningController {
-    constructor(private readonly miningService: MiningService) {}
-  
-    // 채굴 시작
-    @Post('start')
-    async startMining(@Body() dto: StartMiningDto) {
-      return this.miningService.startMining(dto);
+  // 채굴 시작
+  @Post('start')
+  async startMining(@Body() dto: StartMiningDto) {
+    if (!dto.walletAddress) {
+      throw new BadRequestException('walletAddress는 필수입니다.');
     }
+    return this.miningService.startMining(dto);
+  }
   
     // 지갑 주소 기준 포인트 현황 조회
     @Get('status')
