@@ -123,7 +123,8 @@ export class MiningService {
       if (!result.success) {
         throw new Error('토큰 전송에 실패했습니다.');
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('[sendJetton Error]', error?.response?.data || error.message);
       throw new BadRequestException('토큰 전송 실패: ' + error.message);
     }
 

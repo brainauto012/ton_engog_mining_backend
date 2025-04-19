@@ -18,6 +18,10 @@ export async function sendJetton({
   jettonAmount: number;        // 전송할 Jetton 수량
   tonEndpoint: string;         // TON API endpoint
 }) {
+
+  // sendJetton 함수 시작 시 딜레이
+  await new Promise((res) => setTimeout(res, 3000));
+
   const mnemonic = process.env.MNEMONIC?.split(' ');
   if (!mnemonic) throw new Error('MNEMONIC 환경변수가 설정되지 않았습니다.');
 
