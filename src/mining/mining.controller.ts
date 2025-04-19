@@ -36,6 +36,7 @@ export class MiningController {
     // 클레임 요청
     @Post('claim')
     async claimPoints(@Body('walletAddress') walletAddress: string) {
+      console.log("Received walletAddress:", walletAddress); // 추가된 로그
       if (!walletAddress) {
         throw new BadRequestException('지갑 주소가 필요합니다.');
       }
