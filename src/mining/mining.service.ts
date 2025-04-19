@@ -73,6 +73,23 @@ export class MiningService {
     return { points: miner?.points ?? 0 };
   }
 
+  // 현재 마이닝 상태 조회 (포인트, 누적 클레임 등)
+  async getMiningStatus(walletAddress: string) {
+    const miner = await this.minerModel.findOne({ walletAddress });
+  
+    if (!miner) {
+      throw new NotFoundException('해당 지갑 주소를 가진 유저를 찾을 수 없습니다.');
+    }
+  
+    return {
+      walletAddress: miner.walletAddress,
+      points: miner.points,
+      totalClaimed: miner.totalClaimed ?? 0,
+      lastUpdated: miner.updatedAt,
+      isMining: true,
+    };
+  }
+
   // 포인트 클레임 처리
   async claimPoints(walletAddress: string) {
     const miner = await this.minerModel.findOne({ walletAddress });
