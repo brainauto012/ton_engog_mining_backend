@@ -1,22 +1,21 @@
-// claim.service.ts
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Miner } from '../miner/miner.schema';  // miner 스키마
-import { MiningService } from '../mining/mining.service';  // 실제 포인트 계산
-import { sendJetton } from '../ton/sendJetton';
+import { MiningService } from '../mining/mining.service';  // MiningService 임포트
 
 @Injectable()
 export class ClaimService {
   constructor(
     @InjectModel(Miner.name) private readonly minerModel: Model<Miner>,  // miner 스키마 모델
-    private readonly miningService: MiningService,
+    private readonly miningService: MiningService,  // MiningService 의존성 주입
   ) {}
 
   // Claim 처리 함수
-  async processClaim(walletAddress: string) {  // userId 대신 walletAddress로 변경
+  async processClaim(walletAddress: string) {  
     // 지갑 주소로 miner 정보 가져오기
-    const miner = await this.minerModel.findOne({ walletAddress });  // walletAddress로 조회
+    console.log(`[ClaimService] Processing claim for ${walletAddress}`);
+    const miner = await this.minerModel.findOne({ walletAddress });  
     if (!miner) {
       throw new Error('Miner not found');
     }
@@ -30,9 +29,7 @@ export class ClaimService {
     miner.points -= 100; // 예시로 100포인트 차감
     await miner.save();
 
-    // 스마트 컨트랙트 호출 (실제 호출 대신 시뮬레이션)
-    const result = await this.miningService.claimToContract(walletAddress, 100);  // 지갑 주소로 수정
-
-    return result; // 스마트컨트랙트 호출 결과 반환
+    // MiningService의 claimPoints 호출
+    return this.miningService.claimPoints(walletAddress);
   }
 }

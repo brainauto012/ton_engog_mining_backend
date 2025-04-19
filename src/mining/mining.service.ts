@@ -1,5 +1,3 @@
-// src/mining/mining.service.ts
-
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -18,7 +16,6 @@ export class MiningService {
     @InjectModel(Mining.name) private miningModel: Model<MiningDocument>,
     @InjectModel(Miner.name) private minerModel: Model<MinerDocument>,
   ) {}
-
 
   // 채굴 시작: 포인트를 누적
   async startMining(startMiningDto: StartMiningDto) {
@@ -76,34 +73,6 @@ export class MiningService {
     return { points: miner?.points ?? 0 };
   }
 
-  // 채굴 포인트 계산 및 자동 업데이트
-  @Cron(CronExpression.EVERY_MINUTE)
-  async calculateMiningPoints() {
-    const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
-    
-    // 1분 이상 경과한 mining 레코드를 찾음
-    const miningRecords = await this.miningModel.find({ lastUpdated: { $lte: oneMinuteAgo } });
-    const minerCount = await this.minerModel.countDocuments(); // 전체 유저 수를 구함
-    const hashRate = this.calculateHashRate(minerCount); // 전체 유저 수에 기반한 공통 해시레이트 계산
-    const pointsGained = this.calculatePoints(hashRate); // 포인트 계산
-  
-    const now = new Date();
-  
-    for (const mining of miningRecords) {
-      // mining 로그에 포인트 누적 (기록 용도)
-      mining.pointsGained += pointsGained;
-      mining.lastUpdated = now; // lastUpdated 갱신
-      await mining.save();
-  
-      // miner 포인트도 누적 (실제 사용자 보상)
-      await this.minerModel.findOneAndUpdate(
-        { walletAddress: mining.walletAddress },
-        { $inc: { points: pointsGained } },
-        { upsert: true, new: true }
-      );
-    }
-  }
-
   // 포인트 클레임 처리
   async claimPoints(walletAddress: string) {
     const miner = await this.minerModel.findOne({ walletAddress });
@@ -150,26 +119,5 @@ export class MiningService {
       message: '포인트 클레임이 완료되었습니다.',
       claimed: claimedPoints,
     };
-  }
-
-  async getMiningStatus(walletAddress: string) {
-    const miner = await this.minerModel.findOne({ walletAddress });
-  
-    if (!miner) {
-      throw new NotFoundException('해당 지갑 주소를 가진 유저를 찾을 수 없습니다.');
-    }
-  
-    return {
-      walletAddress: miner.walletAddress,
-      points: miner.points,
-      totalClaimed: miner.totalClaimed ?? 0,
-      lastUpdated: miner.updatedAt,
-      isMining: true,
-    };
-  }
-
-  async claimToContract(userId: string, points: number) {
-    console.log(`Claiming ${points} points for user ${userId} to contract...`);
-    return { success: true, transactionId: 'tx1234' };
   }
 }

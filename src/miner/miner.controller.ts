@@ -1,3 +1,4 @@
+//miner.controller.ts
 import { Controller, Get, Param } from '@nestjs/common';
 import { MinerService } from './miner.service';
 
