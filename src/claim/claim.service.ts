@@ -4,6 +4,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Miner } from '../miner/miner.schema';  // miner 스키마
 import { MiningService } from '../mining/mining.service';  // 실제 포인트 계산
+import { sendJetton } from '../ton/sendJetton';
 
 @Injectable()
 export class ClaimService {

@@ -6,6 +6,7 @@ import { MiningController } from './mining.controller';
 import { Mining, MiningSchema } from './mining.schema';
 import { Miner, MinerSchema } from './miner.schema';
 
+
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Miner.name, schema: MinerSchema },{ name: Mining.name, schema: MiningSchema }]),

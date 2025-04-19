@@ -118,20 +118,20 @@ export class MiningService {
 
     const claimedPoints = miner.points;
 
-    if (!process.env.JETTON_WALLET_ADDRESS || !process.env.TON_ENDPOINT) {
+    if (!process.env.JETTON_MASTER_ADDRESS || !process.env.TON_ENDPOINT) {
       throw new Error('환경변수가 올바르게 설정되지 않았습니다.');
     }
 
-    const jettonWalletAddress = process.env.JETTON_WALLET_ADDRESS;
+    const jettonMasterAddress = process.env.JETTON_MASTER_ADDRESS;
     const tonEndpoint = process.env.TON_ENDPOINT;
 
     // ENGOG 토큰 전송
     try {
       const result = await sendJetton({
         recipient: walletAddress,
-        jettonWalletAddress, // 환경변수에 지정된 지갑 주소
-        jettonAmount: claimedPoints, // 클레임한 포인트만큼 토큰 전송
-        tonEndpoint // TON 엔드포인트
+        jettonMasterAddress,
+        jettonAmount: claimedPoints,
+        tonEndpoint,
       });
 
       if (!result.success) {
